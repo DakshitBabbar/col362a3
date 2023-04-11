@@ -7,6 +7,14 @@
 using namespace std;
 
 
+//--globally defined system parameters--
+
+//allowed size of the memory in KB to store the elemtns to be sorted
+//int memorysize = 800000;
+int memorysize = 6;
+
+//--globally defined system parameters--
+
 
 
 //this function sorts the input run in ascending order 
@@ -38,11 +46,15 @@ int sort_all(string fl_input, const long key_count){
     string fl_scratch_output = "";
     while(count < key_count){
         //take the first few strings that consitute at most 800MB of space and put them in a vector
-        for(int i=0; i<800000; i++){
-            if (count = key_count) break;
-            infile >> element;
-            myrun.push_back(element);
-            count++
+        for(int i=0; i<memorysize; i++){
+            if (count == key_count) break;
+
+            if (getline (infile, element)) {
+              myrun.push_back(element);
+              count++;
+            } else {
+                break;
+            }
         }
 
         //sort the vector
@@ -96,7 +108,10 @@ void merge(int stage_num, int start, int end, int my_run_idx){
     int prev_stage = stage_num-1;
 
     //the number of lines per run that are supposed to be there in the buffer
-    int num_lines_per_run = 800000/(end-start+2);
+    int num_lines_per_run = memorysize/(end-start+2);
+
+    //make a vector to store the next indices of the files to be chosen
+    vector<int> file_idx(end-start+1, num_lines_per_run);
 
     //make the buffer vector by taking input from files
     vector<pair<string,int>> sort_buffer;
@@ -106,9 +121,10 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
         ifstream infile (fl_input);
 
-        pair<string, int> temp("",i);
+        pair<string, int> temp;
         for(int j=0; j<num_lines_per_run; j++){
             if(getline (infile, temp.first)){
+                temp.second = i;
                 sort_buffer.push_back(temp);
             } else {
                 break;
@@ -117,7 +133,7 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
         infile.close();
     }
-
+    
     //make a heap of the buffer
     make_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
 
@@ -129,7 +145,8 @@ void merge(int stage_num, int start, int end, int my_run_idx){
         for(int i=0; i<num_lines_per_run; i++){
             //get the minimum element from the sort_buffer
             pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-            pair<string,int> temp_out = sort_buffer.pop_back();
+            pair<string,int> temp_out = sort_buffer.back();
+            sort_buffer.pop_back();
 
             //add it to the output_buffer
             output_buffer.push_back(temp_out.first);
@@ -138,9 +155,16 @@ void merge(int stage_num, int start, int end, int my_run_idx){
             fl_input = "temp." + to_string(prev_stage) + "." + to_string(temp_out.second) + ".txt";
 
             ifstream infile (fl_input);
-            if(getline (infile, temp_out.first)){
-                sort_buffer.push_back(temp_out);
-                push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+            int idx = 0;
+            //##this can be a bottle-neck try to optimize
+            while(getline (infile, temp_out.first)){
+                if(idx == file_idx[temp_out.second-start]){
+                    file_idx[temp_out.second-start]++;
+                    sort_buffer.push_back(temp_out);
+                    push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+                    break;
+                }
+                idx++;
             }
 
             infile.close();
@@ -175,12 +199,11 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
 //this function takes the following inputs and merges all the runs to get the final output
 //called by external_merge_sort_withstop
-int merge_all(string fl_output, const int k = 2, const int num_merges = 0, int num_init_runs){
+int merge_all(string fl_output, const int k, const int num_merges, int num_init_runs){
     int stage_count = 1;
     int in_run_count = num_init_runs;
     int merge_count = 0;
     while(in_run_count != 1){
-
         //check if the process needs to be stoped midway
         if(num_merges !=0){
             if(merge_count=num_merges){
@@ -192,7 +215,6 @@ int merge_all(string fl_output, const int k = 2, const int num_merges = 0, int n
         int out_run_count = 0;
         int run_idx = 1;
         while(run_idx <= in_run_count){
-
             //check if the process needs to be stoped midway
             if(num_merges !=0){
                 if(merge_count=num_merges){
@@ -204,11 +226,11 @@ int merge_all(string fl_output, const int k = 2, const int num_merges = 0, int n
             int start = run_idx;
             int end;
             if(run_idx+k-1 <= in_run_count){
-                end = run_idx+k-1
+                end = run_idx+k-1;
             } else {
                 end = in_run_count;
             }
-            merge(stage_count, start, end, out_run_count+1)
+            merge(stage_count, start, end, out_run_count+1);
             run_idx += k;
             merge_count++;
             out_run_count++;
@@ -219,12 +241,12 @@ int merge_all(string fl_output, const int k = 2, const int num_merges = 0, int n
 
     //##can be a bottle neck, try to optimise
     // Output the text from temp.last.1 to output file given
-    string last_temp_file = "temp." + to_string(stage_count-1) ".1.txt";
+    string last_temp_file = "temp." + to_string(stage_count-1) + ".1.txt";
     string temp = "";
     ifstream infile (last_temp_file);
     ofstream outfile (fl_output);
     while (getline (infile, temp)) {
-      outfile << temp;
+      outfile << temp << endl;
     }
 
     outfile.close();
@@ -264,6 +286,9 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
 
 
 int main(){
-    
+
+    external_merge_sort_withstop("input.txt", "output.txt", 84, 2, 0);
+
+    cout << "done" << endl;
     return 0;
 }
