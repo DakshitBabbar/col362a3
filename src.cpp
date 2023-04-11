@@ -7,6 +7,8 @@
 using namespace std;
 
 
+
+
 //this function sorts the input run in ascending order 
 //called by sort_all function
 void sort_one(vector<string>& run){
@@ -21,7 +23,9 @@ void sort_one(vector<string>& run){
 }
 
 
-//this function takes creates the initial runs from the input file given and returns the number of runs made
+
+
+//this function creates the initial runs from the input file given and returns the number of runs made
 //called by external_merge_sort_withstop
 int sort_all(string fl_input, const long key_count){
 
@@ -68,12 +72,105 @@ int sort_all(string fl_input, const long key_count){
     return run_count;
 }
 
+
+
+
+//this function defines the comaprison between two pairs based on the first elements
+//called by the merge function for make_heap
+struct greater_pair{
+bool operator()(const pair<string, int>& a,const pair<string, int>& b) const{
+    if(a.first > b.first){
+        return true;
+    } else {
+        return false;
+    }
+}
+};
+
+
+
+
 //merges the runs from start to end (both inclusive) in the stage_num'th stage
+//called by the merge_all function
 void merge(int stage_num, int start, int end, int my_run_idx){
     int prev_stage = stage_num-1;
-    
+
+    //the number of lines per run that are supposed to be there in the buffer
+    int num_lines_per_run = 800000/(end-start+2);
+
+    //make the buffer vector by taking input from files
+    vector<pair<string,int>> sort_buffer;
+    string fl_input;
+    for(int i=start; i<=end; i++){
+        fl_input = "temp." + to_string(prev_stage) + "." + to_string(i) + ".txt";
+
+        ifstream infile (fl_input);
+
+        pair<string, int> temp("",i);
+        for(int j=0; j<num_lines_per_run; j++){
+            if(getline (infile, temp.first)){
+                sort_buffer.push_back(temp);
+            } else {
+                break;
+            }
+        }
+
+        infile.close();
+    }
+
+    //make a heap of the buffer
+    make_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+
+    //make an output buffer
+    vector<string> output_buffer; //maximum size of the output buffer is num_lines_per_run after which we will dump it to the drive
+
+    int iter = 0;
+    while(sort_buffer.size() != 0){
+        for(int i=0; i<num_lines_per_run; i++){
+            //get the minimum element from the sort_buffer
+            pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+            pair<string,int> temp_out = sort_buffer.pop_back();
+
+            //add it to the output_buffer
+            output_buffer.push_back(temp_out.first);
+
+            //replace the removed element with a new one from the same file that it was removed
+            fl_input = "temp." + to_string(prev_stage) + "." + to_string(temp_out.second) + ".txt";
+
+            ifstream infile (fl_input);
+            if(getline (infile, temp_out.first)){
+                sort_buffer.push_back(temp_out);
+                push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+            }
+
+            infile.close();
+        }
+
+        //dump the output buffer to the appropriate file
+        string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
+        if(iter == 0){
+            ofstream outfile(fl_output);
+            for(auto e:output_buffer){
+                outfile << e << endl;
+            }
+            outfile.close();
+
+        } else {    
+            ofstream outfile(fl_output, ios::app);
+            for(auto e:output_buffer){
+                outfile << e << endl;
+            }
+            outfile.close();
+
+        }
+
+        output_buffer.clear();
+        iter++;
+    }
 
 }
+
+
 
 
 //this function takes the following inputs and merges all the runs to get the final output
@@ -142,6 +239,9 @@ int merge_all(string fl_output, const int k = 2, const int num_merges = 0, int n
 
 }
 
+
+
+
 //this function takes the following inputs and outputs the sorted file as the output file along with returning the number of merges performed
 //input: input file name
 //output: output file name
@@ -158,4 +258,12 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
 	num_merges_out = merge_all(fl_output, k, num_merges, num_runs);
 
     return num_merges_out;
+}
+
+
+
+
+int main(){
+    
+    return 0;
 }
