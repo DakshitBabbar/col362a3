@@ -1,11 +1,6 @@
 #include <bits/stdc++.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <fstream>
-// #include <string>
-// #include <vector>
-using namespace std;
 
+using namespace std;
 
 //--globally defined system parameters--
 
@@ -14,8 +9,6 @@ using namespace std;
 int memorysize = 6;
 
 //--globally defined system parameters--
-
-
 
 //this function sorts the input run in ascending order 
 //called by sort_all function
@@ -29,9 +22,6 @@ void sort_one(vector<string>& run){
     make_heap(run.begin(), run.end());
     sort_heap(run.begin(), run.end());
 }
-
-
-
 
 //this function creates the initial runs from the input file given and returns the number of runs made
 //called by external_merge_sort_withstop
@@ -84,9 +74,6 @@ int sort_all(string fl_input, const long key_count){
     return run_count;
 }
 
-
-
-
 //this function defines the comaprison between two pairs based on the first elements
 //called by the merge function for make_heap
 struct greater_pair{
@@ -98,9 +85,6 @@ bool operator()(const pair<string, int>& a,const pair<string, int>& b) const{
     }
 }
 };
-
-
-
 
 //merges the runs from start to end (both inclusive) in the stage_num'th stage
 //called by the merge_all function
@@ -261,9 +245,6 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
 
 }
 
-
-
-
 //this function takes the following inputs and outputs the sorted file as the output file along with returning the number of merges performed
 //input: input file name
 //output: output file name
@@ -282,13 +263,3 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
     return num_merges_out;
 }
 
-
-
-
-int main(){
-
-    external_merge_sort_withstop("input.txt", "output.txt", 84, 2, 0);
-
-    cout << "done" << endl;
-    return 0;
-}
