@@ -1,7 +1,0 @@
-crypto
-embedded
-machinelearning
-pequalsnp
-prallelprogramming
-systems
-theory
