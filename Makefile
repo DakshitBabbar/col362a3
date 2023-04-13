@@ -7,14 +7,17 @@ objects=$(sources:.cpp=.o)
 exec:$(objects)
 	$(CC) $(CFLAGS) $^ -o $@
 
-run: exec
-	./exec input.txt output.txt 84 2 0
+run: exec remove
+	./exec ../english-subset.txt output.txt 1000000 2 0
 
 make debug: exec
-	gdb ./exec input.txt output.txt 84 2 0
+	gdb --args ./exec input.txt output.txt 83 2 0
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm *.o exec temp.* output.txt
+
+remove:
+	rm temp.*

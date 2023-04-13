@@ -11,8 +11,8 @@ int main(int argc, char *argv[]){
     const int key_count = atoi(argv[3]);
     const int k = atoi(argv[4]);
     const int num_merges = atoi(argv[5]);
-    external_merge_sort_withstop(inputf, outputf, key_count, k, num_merges);
+    int retval = external_merge_sort_withstop(inputf, outputf, key_count, k, num_merges);
 
-    cout << "done" << endl;
+    cout << "Return value : " << retval << endl;
     return 0;
 }
