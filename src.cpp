@@ -43,6 +43,7 @@ int sort_all(string fl_input, const long key_count){
               myrun.push_back(element);
               count++;
             } else {
+                count == key_count;
                 break;
             }
         }
@@ -93,6 +94,7 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
     //the number of lines per run that are supposed to be there in the buffer
     int num_lines_per_run = memorysize/(end-start+2);
+    int output_buffer_size = memorysize - (end-start+1)*num_lines_per_run;
 
     //make a vector to store the next indices of the files to be chosen
     vector<int> file_idx(end-start+1, num_lines_per_run);
@@ -126,33 +128,38 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
     int iter = 0;
     while(sort_buffer.size() != 0){
-        for(int i=0; i<num_lines_per_run; i++){
+        //cout << stage_num << "," << my_run_idx << endl;
+        for(int i=0; i<output_buffer_size; i++){
             //get the minimum element from the sort_buffer
-            pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-            pair<string,int> temp_out = sort_buffer.back();
-            sort_buffer.pop_back();
+            if(sort_buffer.size() != 0){
+                pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+                pair<string,int> temp_out = sort_buffer.back();
+                sort_buffer.pop_back();
 
-            //add it to the output_buffer
-            output_buffer.push_back(temp_out.first);
+                //add it to the output_buffer
+                output_buffer.push_back(temp_out.first);
 
-            //replace the removed element with a new one from the same file that it was removed
-            fl_input = "temp." + to_string(prev_stage) + "." + to_string(temp_out.second) + ".txt";
+                //replace the removed element with a new one from the same file that it was removed
+                fl_input = "temp." + to_string(prev_stage) + "." + to_string(temp_out.second) + ".txt";
 
-            ifstream infile (fl_input);
-            int idx = 0;
-            //##this can be a bottle-neck try to optimize
-            while(getline (infile, temp_out.first)){
-                if(idx == file_idx[temp_out.second-start]){
-                    file_idx[temp_out.second-start]++;
-                    sort_buffer.push_back(temp_out);
-                    push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-                    break;
+                ifstream infile (fl_input);
+                int idx = 0;
+                //##this can be a bottle-neck try to optimize
+                while(getline (infile, temp_out.first)){
+                    if(idx == file_idx[temp_out.second-start]){
+                        file_idx[temp_out.second-start]++;
+                        sort_buffer.push_back(temp_out);
+                        push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+                        break;
+                    }
+                    idx++;
                 }
-                idx++;
-            }
 
-            infile.close();
+                infile.close();
+            }
         }
+
+        //cout << output_buffer.size() << endl;
 
         //dump the output buffer to the appropriate file
         string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
