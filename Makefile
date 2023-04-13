@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++17 -O3
+CFLAGS=-std=c++17 -O3 -g
 
 sources=main.cpp src.cpp
 objects=$(sources:.cpp=.o)
@@ -10,8 +10,11 @@ exec:$(objects)
 run: exec
 	./exec input.txt output.txt 84 2 0
 
+make debug: exec
+	gdb ./exec input.txt output.txt 84 2 0
+
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm *.o exec output.txt temp*
+	rm *.o exec temp.* output.txt
