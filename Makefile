@@ -8,7 +8,7 @@ exec:$(objects)
 	$(CC) $(CFLAGS) $^ -o $@
 
 run: exec remove
-	./exec input.txt output.txt 84 2 0
+	./exec input.txt output.txt 84 2 8
 
 make debug: exec
 	gdb --args ./exec input.txt output.txt 84 2 0

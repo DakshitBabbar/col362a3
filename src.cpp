@@ -197,7 +197,7 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
     while(in_run_count != 1){
         //check if the process needs to be stoped midway
         if(num_merges !=0){
-            if(merge_count=num_merges){
+            if(merge_count==num_merges){
                 break;
             }
         }
@@ -208,7 +208,7 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
         while(run_idx <= in_run_count){
             //check if the process needs to be stoped midway
             if(num_merges !=0){
-                if(merge_count=num_merges){
+                if(merge_count==num_merges){
                     break;
                 }
             }
@@ -230,23 +230,22 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
         in_run_count = out_run_count;
     }
 
-    //##can be a bottle neck, try to optimise
-    // Output the text from temp.last.1 to output file given
-    string last_temp_file = "temp." + to_string(stage_count-1) + ".1.txt";
-    string temp = "";
-    ifstream infile (last_temp_file);
-    ofstream outfile (fl_output);
-    while (getline (infile, temp)) {
-      outfile << temp << endl;
-    }
-
-    outfile.close();
-    infile.close();
-
     //return the appropriate values
-    if(num_merges!=0){
+    if(in_run_count!=1){
         return -1;
     } else {
+        //##can be a bottle neck, try to optimise
+        // Output the text from temp.last.1 to output file given
+        string last_temp_file = "temp." + to_string(stage_count-1) + ".1.txt";
+        string temp = "";
+        ifstream infile (last_temp_file);
+        ofstream outfile (fl_output);
+        while (getline (infile, temp)) {
+          outfile << temp << endl;
+        }
+
+        outfile.close();
+        infile.close();
         return merge_count;
     }
 
