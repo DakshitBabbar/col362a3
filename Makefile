@@ -10,14 +10,14 @@ exec:$(objects)
 run: exec remove
 	./exec ../english-subset.txt output.txt 1000000 2 0
 
-make debug: exec
+make debug: exec remove
 	gdb --args ./exec input.txt output.txt 83 2 0
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm *.o exec temp.* output.txt
+	rm -f *.o exec temp.* output.txt
 
 remove:
-	rm temp.*
+	rm -f temp.*
