@@ -8,10 +8,10 @@ exec:$(objects)
 	$(CC) $(CFLAGS) $^ -o $@
 
 run: exec remove
-	./exec ../english-subset.txt output.txt 1000000 2 0
+	./exec input.txt output.txt 84 2 0
 
 make debug: exec
-	gdb --args ./exec input.txt output.txt 83 2 0
+	gdb --args ./exec input.txt output.txt 84 2 0
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
