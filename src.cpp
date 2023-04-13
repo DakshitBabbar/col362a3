@@ -6,7 +6,7 @@ using namespace std;
 
 //allowed size of the memory in KB to store the elemtns to be sorted
 //int memorysize = 800000;
-int memorysize = 7;
+int memorysize = 100000;
 
 //--globally defined system parameters--
 
@@ -185,9 +185,6 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
 }
 
-
-
-
 //this function takes the following inputs and merges all the runs to get the final output
 //called by external_merge_sort_withstop
 int merge_all(string fl_output, const int k, const int num_merges, int num_init_runs){
@@ -264,6 +261,7 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
     int num_merges_out;
 
 	num_runs = sort_all(fl_input, key_count);
+    return -1;
 	num_merges_out = merge_all(fl_output, k, num_merges, num_runs);
 
     return num_merges_out;
