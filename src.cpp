@@ -1,12 +1,12 @@
 #include <bits/stdc++.h>
-
+#include <chrono>
 using namespace std;
 
 //--globally defined system parameters--
 
-//allowed size of the memory in KB to store the elemtns to be sorted
-//int memorysize = 800000;
-int memorysize = 100000;
+//allowed size of the memory in Bytes to store the elemtns to be sorted
+//int memorysize = 800000000;
+int memorysize = 100000000;
 
 //--globally defined system parameters--
 
@@ -36,17 +36,34 @@ int sort_all(string fl_input, const long key_count){
     string fl_scratch_output = "";
     while(count < key_count){
         //take the first few strings that consitute at most 800MB of space and put them in a vector
-        for(int i=0; i<memorysize; i++){
+        int run_mem = 0;
+        int run_lines = 0;
+        while(run_mem<memorysize){
             if (count == key_count) break;
 
             if (getline (infile, element)) {
-              myrun.push_back(element);
-              count++;
+                myrun.push_back(element);
+                count++;
+                run_mem += element.length();
+                run_lines++;
             } else {
                 count == key_count;
                 break;
             }
         }
+
+
+        // for(int i=0; i<memorysize; i++){
+        //     if (count == key_count) break;
+
+        //     if (getline (infile, element)) {
+        //       myrun.push_back(element);
+        //       count++;
+        //     } else {
+        //         count == key_count;
+        //         break;
+        //     }
+        // }
 
         //sort the vector
         sort_one(myrun);
@@ -58,6 +75,8 @@ int sort_all(string fl_input, const long key_count){
         for(auto e: myrun){
             outfile << e << endl;
         }
+
+        cout << "Number of lines in Run " << run_count+1 << ": " << run_lines << endl;
 
         //close the output scratch files
         outfile.close();
@@ -93,43 +112,57 @@ void merge(int stage_num, int start, int end, int my_run_idx){
     int prev_stage = stage_num-1;
 
     //the number of lines per run that are supposed to be there in the buffer
-    int num_lines_per_run = memorysize/(end-start+2);
-    int output_buffer_size = memorysize - (end-start+1)*num_lines_per_run;
+    int mem_per_run = memorysize/(end-start+2);
+    int output_buffer_size = memorysize - (end-start+1)*mem_per_run;
 
-    //make a vector to store the next indices of the files to be chosen
-    vector<int> file_idx(end-start+1, num_lines_per_run);
-
-    //make the buffer vector by taking input from files
-    vector<pair<string,int>> sort_buffer;
+    //open all the files
+    vector<ifstream> in_file_streams(end-start+1);
     string fl_input;
     for(int i=start; i<=end; i++){
         fl_input = "temp." + to_string(prev_stage) + "." + to_string(i) + ".txt";
+        in_file_streams[i-start].open(fl_input);
+    }  
 
-        ifstream infile (fl_input);
-
+    //make the buffer vector by taking input from files
+    vector<pair<string,int>> sort_buffer;
+    for(int i=start; i<=end; i++){
         pair<string, int> temp;
-        for(int j=0; j<num_lines_per_run; j++){
-            if(getline (infile, temp.first)){
+        int run_mem = 0;
+        while(run_mem<mem_per_run){
+            if (getline (in_file_streams[i-start], temp.first)) {
                 temp.second = i;
                 sort_buffer.push_back(temp);
+                run_mem += temp.first.length();
             } else {
                 break;
             }
         }
 
-        infile.close();
+        // pair<string, int> temp;
+        // for(int j=0; j<mem_per_run; j++){
+        //     if(getline (in_file_streams[i-start], temp.first)){
+        //         temp.second = i;
+        //         sort_buffer.push_back(temp);
+        //     } else {
+        //         break;
+        //     }
+        // }
     }
     
     //make a heap of the buffer
     make_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
 
     //make an output buffer
-    vector<string> output_buffer; //maximum size of the output buffer is num_lines_per_run after which we will dump it to the drive
+    vector<string> output_buffer; //maximum size of the output buffer is mem_per_run after which we will dump it to the drive
 
     int iter = 0;
+    string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
+    ofstream outfile(fl_output, ios::app);
     while(sort_buffer.size() != 0){
-        //cout << stage_num << "," << my_run_idx << endl;
-        for(int i=0; i<output_buffer_size; i++){
+        
+        //fill the output buffer upto its limit
+        int output_buffer_mem = 0;
+        while(output_buffer_mem<output_buffer_size){
             //get the minimum element from the sort_buffer
             if(sort_buffer.size() != 0){
                 pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
@@ -138,49 +171,73 @@ void merge(int stage_num, int start, int end, int my_run_idx){
 
                 //add it to the output_buffer
                 output_buffer.push_back(temp_out.first);
+                output_buffer_mem += temp_out.first.length();
 
                 //replace the removed element with a new one from the same file that it was removed
-                fl_input = "temp." + to_string(prev_stage) + "." + to_string(temp_out.second) + ".txt";
-
-                ifstream infile (fl_input);
-                int idx = 0;
-                //##this can be a bottle-neck try to optimize
-                while(getline (infile, temp_out.first)){
-                    if(idx == file_idx[temp_out.second-start]){
-                        file_idx[temp_out.second-start]++;
-                        sort_buffer.push_back(temp_out);
-                        push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-                        break;
-                    }
-                    idx++;
+                if(getline (in_file_streams[temp_out.second-start], temp_out.first)){
+                    sort_buffer.push_back(temp_out);
+                    push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
                 }
-
-                infile.close();
+            } else {
+                break;
             }
         }
+
+        // for(int i=0; i<output_buffer_size; i++){
+        //     //get the minimum element from the sort_buffer
+        //     if(sort_buffer.size() != 0){
+        //         pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+        //         pair<string,int> temp_out = sort_buffer.back();
+        //         sort_buffer.pop_back();
+
+        //         //add it to the output_buffer
+        //         output_buffer.push_back(temp_out.first);
+
+        //         //replace the removed element with a new one from the same file that it was removed
+        //         if(getline (in_file_streams[temp_out.second-start], temp_out.first)){
+        //             sort_buffer.push_back(temp_out);
+        //             push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
+        //         }
+        //     }
+        // }
+
 
         //cout << output_buffer.size() << endl;
 
         //dump the output buffer to the appropriate file
-        string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
-        if(iter == 0){
-            ofstream outfile(fl_output);
-            for(auto e:output_buffer){
-                outfile << e << endl;
-            }
-            outfile.close();
+        //string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
+        // if(iter == 0){
+        //     ofstream outfile(fl_output);
+        //     for(auto e:output_buffer){
+        //         outfile << e << endl;
+        //     }
+        //     outfile.close();
 
-        } else {    
-            ofstream outfile(fl_output, ios::app);
-            for(auto e:output_buffer){
-                outfile << e << endl;
-            }
-            outfile.close();
+        // } else {    
+        //     ofstream outfile(fl_output, ios::app);
+        //     for(auto e:output_buffer){
+        //         outfile << e << endl;
+        //     }
+        //     outfile.close();
 
+        // }
+
+
+        //dump the output buffer to the appropriate file
+        for(auto e:output_buffer){
+            outfile << e << endl;
         }
+        
 
         output_buffer.clear();
         iter++;
+    }
+
+    //close all the files
+    outfile.close();
+
+    for(int i=start; i<=end; i++){
+        in_file_streams[i-start].close();
     }
 
 }
@@ -261,7 +318,6 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
     int num_merges_out;
 
 	num_runs = sort_all(fl_input, key_count);
-    return -1;
 	num_merges_out = merge_all(fl_output, k, num_merges, num_runs);
 
     return num_merges_out;
