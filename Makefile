@@ -7,10 +7,10 @@ objects=$(sources:.cpp=.o)
 exec:$(objects)
 	$(CC) $(CFLAGS) $^ -o $@
 
-run: exec remove
-	time ./exec english-subset.txt output.txt 1000000 2 0
+run: exec
+	./exec ../random.txt output.txt 1000000 2 0
 
-make debug: exec remove
+make debug: exec
 	gdb --args ./exec input.txt output.txt 83 2 0
 
 %.o: %.cpp

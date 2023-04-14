@@ -5,8 +5,19 @@ using namespace std;
 //--globally defined system parameters--
 
 //allowed size of the memory in Bytes to store the elemtns to be sorted
-//int memorysize = 800000000;
-int memorysize = 100000000;
+//int memorysize = 900000000;
+int memorysize = 900000000;
+
+decltype(std::chrono::high_resolution_clock::now()) t1, t2; 
+ 
+#define START \
+t1 = std::chrono::high_resolution_clock::now() 
+ 
+#define STOP \
+t2 = std::chrono::high_resolution_clock::now(); \
+std::cout << "time taken : " << \
+    std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() \
+    << "ms" << std::endl 
 
 //--globally defined system parameters--
 
@@ -47,7 +58,7 @@ int sort_all(string fl_input, const long key_count){
                 run_mem += element.length();
                 run_lines++;
             } else {
-                count == key_count;
+                count = key_count;
                 break;
             }
         }
@@ -69,7 +80,7 @@ int sort_all(string fl_input, const long key_count){
         sort_one(myrun);
 
         //output the sorted vector elements to the scratch output file
-        fl_scratch_output = "temp.0."+ to_string(run_count+1)+ ".txt";
+        fl_scratch_output = "temp.0."+ to_string(run_count+1);
         ofstream outfile (fl_scratch_output);
 
         for(auto e: myrun){
@@ -119,7 +130,7 @@ void merge(int stage_num, int start, int end, int my_run_idx){
     vector<ifstream> in_file_streams(end-start+1);
     string fl_input;
     for(int i=start; i<=end; i++){
-        fl_input = "temp." + to_string(prev_stage) + "." + to_string(i) + ".txt";
+        fl_input = "temp." + to_string(prev_stage) + "." + to_string(i);
         in_file_streams[i-start].open(fl_input);
     }  
 
@@ -156,7 +167,7 @@ void merge(int stage_num, int start, int end, int my_run_idx){
     vector<string> output_buffer; //maximum size of the output buffer is mem_per_run after which we will dump it to the drive
 
     int iter = 0;
-    string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
+    string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx);
     ofstream outfile(fl_output, ios::app);
     while(sort_buffer.size() != 0){
         
@@ -290,7 +301,7 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
     } else {
         //##can be a bottle neck, try to optimise
         // Output the text from temp.last.1 to output file given
-        string last_temp_file = "temp." + to_string(stage_count-1) + ".1.txt";
+        string last_temp_file = "temp." + to_string(stage_count-1) + ".1";
         string temp = "";
         ifstream infile (last_temp_file);
         ofstream outfile (fl_output);
@@ -316,10 +327,12 @@ int external_merge_sort_withstop(const char* input, const char* output, const lo
     string fl_output = output;
     int num_runs;
     int num_merges_out;
-
+    START;
 	num_runs = sort_all(fl_input, key_count);
+    STOP;
+    START;
 	num_merges_out = merge_all(fl_output, k, num_merges, num_runs);
-
+    STOP;
     return num_merges_out;
 }
 
