@@ -23,13 +23,14 @@ std::cout << "time taken : " << \
 
 //this function sorts the input run in ascending order 
 //called by sort_all function
-void sort_one(vector<string>& run){
+void sort_one(vector<string> &run){
     //use inbuilt sorting of a vector which uses introsort (hybrid algo which uses merge sort quick sort and heap sort, has O(n) space complexity and O(nlogn) time complexity)
     //sort(run.begin(), run.end());
 
     //or
 
     //use inbuilt sorting of a heap which uses heap sort (has O(1) space complexity and O(nlogn) time complexity)
+    // sort(run.begin(), run.end());
     make_heap(run.begin(), run.end());
     sort_heap(run.begin(), run.end());
 }
@@ -62,19 +63,6 @@ int sort_all(string fl_input, const long key_count){
                 break;
             }
         }
-
-
-        // for(int i=0; i<memorysize; i++){
-        //     if (count == key_count) break;
-
-        //     if (getline (infile, element)) {
-        //       myrun.push_back(element);
-        //       count++;
-        //     } else {
-        //         count == key_count;
-        //         break;
-        //     }
-        // }
 
         //sort the vector
         sort_one(myrun);
@@ -148,16 +136,6 @@ void merge(int stage_num, int start, int end, int my_run_idx){
                 break;
             }
         }
-
-        // pair<string, int> temp;
-        // for(int j=0; j<mem_per_run; j++){
-        //     if(getline (in_file_streams[i-start], temp.first)){
-        //         temp.second = i;
-        //         sort_buffer.push_back(temp);
-        //     } else {
-        //         break;
-        //     }
-        // }
     }
     
     //make a heap of the buffer
@@ -194,51 +172,10 @@ void merge(int stage_num, int start, int end, int my_run_idx){
             }
         }
 
-        // for(int i=0; i<output_buffer_size; i++){
-        //     //get the minimum element from the sort_buffer
-        //     if(sort_buffer.size() != 0){
-        //         pop_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-        //         pair<string,int> temp_out = sort_buffer.back();
-        //         sort_buffer.pop_back();
-
-        //         //add it to the output_buffer
-        //         output_buffer.push_back(temp_out.first);
-
-        //         //replace the removed element with a new one from the same file that it was removed
-        //         if(getline (in_file_streams[temp_out.second-start], temp_out.first)){
-        //             sort_buffer.push_back(temp_out);
-        //             push_heap(sort_buffer.begin(), sort_buffer.end(), greater_pair());
-        //         }
-        //     }
-        // }
-
-
-        //cout << output_buffer.size() << endl;
-
-        //dump the output buffer to the appropriate file
-        //string fl_output = "temp." + to_string(stage_num) + "." + to_string(my_run_idx) + ".txt";
-        // if(iter == 0){
-        //     ofstream outfile(fl_output);
-        //     for(auto e:output_buffer){
-        //         outfile << e << endl;
-        //     }
-        //     outfile.close();
-
-        // } else {    
-        //     ofstream outfile(fl_output, ios::app);
-        //     for(auto e:output_buffer){
-        //         outfile << e << endl;
-        //     }
-        //     outfile.close();
-
-        // }
-
-
         //dump the output buffer to the appropriate file
         for(auto e:output_buffer){
             outfile << e << endl;
-        }
-        
+        }        
 
         output_buffer.clear();
         iter++;
@@ -302,15 +239,16 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
         //##can be a bottle neck, try to optimise
         // Output the text from temp.last.1 to output file given
         string last_temp_file = "temp." + to_string(stage_count-1) + ".1";
-        string temp = "";
-        ifstream infile (last_temp_file);
-        ofstream outfile (fl_output);
-        while (getline (infile, temp)) {
-          outfile << temp << endl;
-        }
+        // string temp = "";
+        // ifstream infile (last_temp_file);
+        // ofstream outfile (fl_output);
+        // while (getline (infile, temp)) {
+        //   outfile << temp << endl;
+        // }
 
-        outfile.close();
-        infile.close();
+        // outfile.close();
+        // infile.close();
+        rename(last_temp_file.c_str(), fl_output.c_str());
         return merge_count;
     }
 
