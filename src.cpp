@@ -1,23 +1,22 @@
 #include <bits/stdc++.h>
-#include <chrono>
+// #include <chrono>
 using namespace std;
 
 //--globally defined system parameters--
 
 //allowed size of the memory in Bytes to store the elemtns to be sorted
-//int memorysize = 900000000;
-int memorysize = 900000000;
+int memorysize = 820000000;
 
-decltype(std::chrono::high_resolution_clock::now()) t1, t2; 
+// decltype(std::chrono::high_resolution_clock::now()) t1, t2; 
  
-#define START \
-t1 = std::chrono::high_resolution_clock::now() 
+// #define START \
+// t1 = std::chrono::high_resolution_clock::now() 
  
-#define STOP \
-t2 = std::chrono::high_resolution_clock::now(); \
-std::cout << "time taken : " << \
-    std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() \
-    << "ms" << std::endl 
+// #define STOP \
+// t2 = std::chrono::high_resolution_clock::now(); \
+// std::cout << "time taken : " << \
+//     std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() \
+//     << "ms" << std::endl 
 
 //--globally defined system parameters--
 
@@ -30,7 +29,6 @@ void sort_one(vector<string> &run){
     //or
 
     //use inbuilt sorting of a heap which uses heap sort (has O(1) space complexity and O(nlogn) time complexity)
-    // sort(run.begin(), run.end());
     make_heap(run.begin(), run.end());
     sort_heap(run.begin(), run.end());
 }
@@ -40,7 +38,9 @@ void sort_one(vector<string> &run){
 int sort_all(string fl_input, const long key_count){
 
     ifstream infile (fl_input); //the file is not loaded into menmory at this point
-    
+    if(!infile.is_open()){
+        return -1;
+    }
     vector<string> myrun;
     string element = "";
     int count = 0;
@@ -74,8 +74,7 @@ int sort_all(string fl_input, const long key_count){
         for(auto e: myrun){
             outfile << e << endl;
         }
-
-        cout << "Number of lines in Run " << run_count+1 << ": " << run_lines << endl;
+        // cout << "Number of lines in Run " << run_count+1 << ": " << run_lines << endl;
 
         //close the output scratch files
         outfile.close();
@@ -96,7 +95,7 @@ int sort_all(string fl_input, const long key_count){
 //this function defines the comaprison between two pairs based on the first elements
 //called by the merge function for make_heap
 struct greater_pair{
-    bool operator()(const pair<string, int>& a,const pair<string, int>& b) const{
+    bool operator()(const pair<string, int> &a,const pair<string, int> &b) const{
         if(a.first > b.first){
             return true;
         } else {
@@ -107,19 +106,24 @@ struct greater_pair{
 
 //merges the runs from start to end (both inclusive) in the stage_num'th stage
 //called by the merge_all function
-void merge(int stage_num, int start, int end, int my_run_idx){
+int merge(int stage_num, int start, int end, int my_run_idx){
     int prev_stage = stage_num-1;
 
     //the number of lines per run that are supposed to be there in the buffer
+    // int mem_per_run = memorysize/(end-start+1);
+    // int output_buffer_size = memorysize - (end-start+1)*mem_per_run + 100000000;
     int mem_per_run = memorysize/(end-start+2);
     int output_buffer_size = memorysize - (end-start+1)*mem_per_run;
-
+    // cout << "output_buffer_size: " << output_buffer_size << endl;
     //open all the files
     vector<ifstream> in_file_streams(end-start+1);
     string fl_input;
     for(int i=start; i<=end; i++){
         fl_input = "temp." + to_string(prev_stage) + "." + to_string(i);
         in_file_streams[i-start].open(fl_input);
+        if(!in_file_streams[i-start].is_open()){
+            return -1;
+        }
     }  
 
     //make the buffer vector by taking input from files
@@ -187,7 +191,7 @@ void merge(int stage_num, int start, int end, int my_run_idx){
     for(int i=start; i<=end; i++){
         in_file_streams[i-start].close();
     }
-
+    return 0;
 }
 
 //this function takes the following inputs and merges all the runs to get the final output
@@ -223,7 +227,10 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
             } else {
                 end = in_run_count;
             }
-            merge(stage_count, start, end, out_run_count+1);
+            int retm = merge(stage_count, start, end, out_run_count+1);
+            if(retm == -1){
+                return -1;
+            }
             run_idx += k;
             merge_count++;
             out_run_count++;
@@ -234,24 +241,14 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
 
     //return the appropriate values
     if(in_run_count!=1){
-        return -1;
+        return merge_count;
     } else {
         //##can be a bottle neck, try to optimise
         // Output the text from temp.last.1 to output file given
         string last_temp_file = "temp." + to_string(stage_count-1) + ".1";
-        // string temp = "";
-        // ifstream infile (last_temp_file);
-        // ofstream outfile (fl_output);
-        // while (getline (infile, temp)) {
-        //   outfile << temp << endl;
-        // }
-
-        // outfile.close();
-        // infile.close();
         rename(last_temp_file.c_str(), fl_output.c_str());
         return merge_count;
     }
-
 }
 
 //this function takes the following inputs and outputs the sorted file as the output file along with returning the number of merges performed
@@ -261,16 +258,18 @@ int merge_all(string fl_output, const int k, const int num_merges, int num_init_
 //k: the maximum number of runs that can be merged at one time
 //num_merges: the number of merge steps to be taken, by default complete till we get the output
 int external_merge_sort_withstop(const char* input, const char* output, const long key_count, const int k = 2, const int num_merges = 0){
+    // START;
     string fl_input = input;
     string fl_output = output;
     int num_runs;
     int num_merges_out;
-    START;
+
 	num_runs = sort_all(fl_input, key_count);
-    STOP;
-    START;
+    if(num_runs == -1){
+        return -1;
+    }
 	num_merges_out = merge_all(fl_output, k, num_merges, num_runs);
-    STOP;
+    // STOP;
     return num_merges_out;
 }
 

@@ -1,12 +1,13 @@
-make
-for i in 2 8 16 
+make clean
+make 
+for i in 2 8 16
 do
-    for j in 5 50 100
+    for j in 0
     do
         echo "K: $i"
         echo "NUM_MERGES: $j"
         make remove
-        time ./exec ../random.txt output.txt 1000000 $i $j
+        ./exec ../random.txt output.txt 1000000 $i $j
         diff output.txt ../randomexp.txt
     done
 done

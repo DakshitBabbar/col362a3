@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++17 -O3 -g
+CFLAGS=-std=c++11 -O3
 
 sources=main.cpp src.cpp
 objects=$(sources:.cpp=.o)
